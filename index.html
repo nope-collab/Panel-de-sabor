@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación Sensorial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1a6b4a; --green-light: #e8f5ee; --green-mid: #2d9966;
+    --green-pale: #f0faf5; --red: #c0392b; --red-light: #fdf0ee;
+    --border: #d4ddd9; --text: #1a2420; --muted: #6b7c76;
+    --bg: #f7faf8; --white: #ffffff; --radius: 10px;
+    --shadow: 0 2px 12px rgba(26,107,74,0.07);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1.5rem 1rem 5rem;
+  }
+
+  .page-wrap { max-width: 720px; margin: 0 auto; }
+
+  header {
+    padding: 1.5rem 0 1.25rem;
+    border-bottom: 1.5px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .header-tag {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--green-mid); margin-bottom: 0.4rem;
+  }
+  h1 { font-size: clamp(22px, 5vw, 28px); font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; }
+  h1 strong { font-weight: 500; }
+
+  /* Cards */
+  .card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem;
+    margin-bottom: 1.25rem; box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--green-mid); margin-bottom: 1rem;
+  }
+
+  /* Fields grid — 2 cols on wide, 1 on narrow */
+  .fields-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .field-full { grid-column: 1 / -1; }
+  @media (max-width: 480px) {
+    .fields-grid { grid-template-columns: 1fr; }
+    .field-full { grid-column: 1; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 13px; color: var(--muted); }
+  .field label .req { color: var(--red); margin-left: 2px; }
+
+  select, input[type="text"], input[type="date"], input[type="number"] {
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 7px;
+    padding: 10px 12px; width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+    min-height: 44px;
+  }
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7c76' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+  }
+  select:focus, input:focus { border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(45,153,102,0.12); }
+  select.error, input.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(192,57,43,0.1); }
+  .error-msg { font-size: 12px; color: var(--red); margin-top: 4px; display: none; }
+  .error-msg.show { display: block; }
+
+  /* Sample cards */
+  .sample-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 1.25rem;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .sample-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.25rem; background: var(--green-pale);
+    border-bottom: 1px solid var(--border); gap: 8px; flex-wrap: wrap;
+  }
+  .sample-label {
+    font-size: 13px; font-family: 'DM Mono', monospace;
+    color: var(--green); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .remove-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    padding: 4px 8px; border-radius: 6px; transition: color 0.15s, background 0.15s;
+    min-height: 32px;
+  }
+  .remove-btn:hover { color: var(--red); background: var(--red-light); }
+
+  /* Table wrapper — horizontal scroll on small screens */
+  .sample-body { padding: 1rem 1.25rem 1.25rem; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Eval table */
+  .eval-table { width: 100%; border-collapse: collapse; min-width: 480px; }
+  .eval-table thead tr th {
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    padding: 6px 6px 10px; text-align: center;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .eval-table thead tr th:first-child { text-align: left; min-width: 130px; }
+  .col-val {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--green-mid); display: block; letter-spacing: 0.05em;
+  }
+  .eval-table tbody tr td {
+    padding: 7px 6px; border-bottom: 1px solid #eef2f0;
+    text-align: center; vertical-align: middle;
+  }
+  .eval-table tbody tr:last-child td { border-bottom: none; }
+  .eval-table tbody tr td:first-child {
+    text-align: left; font-size: 13px; color: var(--text);
+    padding-right: 12px; white-space: nowrap;
+  }
+  .eval-table tbody tr.row-error td:first-child { color: var(--red); }
+  .eval-table tbody tr.row-error { background: var(--red-light); }
+
+  /* Radio styled as square checkbox */
+  .radio-cell input[type="radio"] { display: none; }
+  .radio-cell label {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    border: 1.5px solid var(--border); border-radius: 5px;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    background: var(--bg);
+  }
+  .radio-cell input[type="radio"]:checked + label {
+    background: var(--green-mid); border-color: var(--green-mid);
+  }
+  .radio-cell input[type="radio"]:checked + label::after {
+    content: ''; width: 7px; height: 7px;
+    background: white; border-radius: 1px; display: block;
+  }
+  .radio-cell label:hover { border-color: var(--green-mid); background: var(--green-light); }
+
+  /* ¿Lo comprarías? */
+  .buy-section { padding: 1rem 1.25rem 1.25rem; border-top: 1px solid var(--border); }
+  .buy-question { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+  .buy-options { display: flex; gap: 10px; }
+  .buy-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 20px; border: 1.5px solid var(--border);
+    border-radius: 8px; background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    cursor: pointer; transition: all 0.15s; min-height: 44px;
+    user-select: none;
+  }
+  .buy-btn.selected { border-color: var(--green-mid); background: var(--green-light); color: var(--green); font-weight: 500; }
+  .buy-btn:hover { border-color: var(--green-mid); background: var(--green-light); }
+  .buy-error { font-size: 12px; color: var(--red); margin-top: 8px; display: none; }
+  .buy-error.show { display: block; }
+
+  /* More samples */
+  .more-section { margin-bottom: 1.25rem; }
+  .more-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem;
+    box-shadow: var(--shadow);
+  }
+  .more-question { font-size: 15px; font-weight: 500; margin-bottom: 0.75rem; }
+  .yes-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    cursor: pointer; transition: all 0.15s; min-height: 44px;
+  }
+  .yes-btn:hover { border-color: var(--green-mid); background: var(--green-light); color: var(--green); }
+  .yes-btn .letter-badge {
+    width: 20px; height: 20px; background: #e2ede8;
+    border-radius: 4px; font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--green); font-family: 'DM Mono', monospace;
+  }
+
+  /* Save button */
+  .save-btn {
+    width: 100%; padding: 15px; background: var(--green); color: white;
+    font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 500;
+    border: none; border-radius: var(--radius); cursor: pointer;
+    letter-spacing: 0.01em; transition: background 0.15s, transform 0.1s;
+    margin-top: 0.5rem; min-height: 52px;
+  }
+  .save-btn:hover { background: var(--green-mid); }
+  .save-btn:active { transform: scale(0.99); }
+  .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green); color: white;
+    padding: 12px 24px; border-radius: var(--radius);
+    font-size: 14px; opacity: 0; transition: all 0.3s;
+    pointer-events: none; white-space: nowrap; z-index: 999;
+    box-shadow: 0 4px 20px rgba(26,107,74,0.3);
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Scroll hint on mobile */
+  .scroll-hint {
+    font-size: 11px; color: var(--muted); text-align: right;
+    margin-bottom: 6px; display: none;
+  }
+  @media (max-width: 560px) { .scroll-hint { display: block; } }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <header>
+    <div class="header-tag">Panel de sabor</div>
+    <h1><strong>Evaluación</strong> sensorial</h1>
+  </header>
+
+  <div id="error-banner" style="display:none; background:#fdf0ee; border:1.5px solid #c0392b; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.25rem; color:#c0392b; font-size:14px; line-height:1.5;">
+    ⚠️ <strong>No se pudieron guardar las respuestas.</strong><br>Verifica tu conexión e intenta de nuevo. No cierres esta pantalla.
+  </div>
+
+  <div class="card">
+    <div class="card-title">Datos generales</div>
+    <div class="fields-grid">
+      <div class="field">
+        <label for="unidad">Unidad donde se realiza <span class="req">*</span></label>
+        <select id="unidad" required>
+          <option value="" disabled selected>Selecciona…</option>
+          <option value="Ensenada">Ensenada</option>
+          <option value="Culiacán">Culiacán</option>
+        </select>
+        <span class="error-msg" id="err-unidad">Campo requerido</span>
+      </div>
+      <div class="field">
+        <label for="fecha">Fecha de realización <span class="req">*</span></label>
+        <input type="date" id="fecha" required>
+        <span class="error-msg" id="err-fecha">Campo requerido</span>
+      </div>
+      <div class="field">
+        <label for="nombre">Nombre del evaluador <span class="req">*</span></label>
+        <input type="text" id="nombre" placeholder="Nombre completo" required>
+        <span class="error-msg" id="err-nombre">Campo requerido</span>
+      </div>
+      <div class="field">
+        <label for="puesto">Puesto del evaluador <span class="req">*</span></label>
+        <input type="text" id="puesto" placeholder="Puesto o cargo" required>
+        <span class="error-msg" id="err-puesto">Campo requerido</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="samples-container"></div>
+
+  <div class="more-section" id="more-section" style="display:none;">
+    <div class="more-card">
+      <div class="more-question">¿Deseas agregar más muestras?</div>
+      <button class="yes-btn" type="button" onclick="addSample()">
+        <span class="letter-badge">A</span> Sí
+      </button>
+    </div>
+  </div>
+
+  <button class="save-btn" type="button" onclick="guardar()">Guardar respuestas</button>
+</div>
+
+<div id="confirmacion" style="display:none; position:fixed; inset:0; background:#f0faf5; z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:2rem; text-align:center; font-family:'DM Sans', sans-serif;">
+  <div style="width:72px; height:72px; background:#1a6b4a; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:1.5rem;">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <h2 style="font-size:24px; font-weight:500; color:#1a2420; margin-bottom:0.75rem;">Respuestas guardadas</h2>
+  <p style="font-size:15px; color:#6b7c76; max-width:320px; line-height:1.6; margin-bottom:1.5rem;">Tus respuestas se han registrado correctamente en la base de datos. Ya puedes cerrar esta pantalla.</p>
+  <button onclick="document.getElementById('confirmacion').style.display='none'; const b=document.querySelector('.save-btn'); b.textContent='Guardar respuestas'; b.disabled=false;" style="padding:10px 24px; background:white; border:1.5px solid #1a6b4a; border-radius:8px; color:#1a6b4a; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer;">Volver al formulario</button>
+</div>
+
+<script>
+const ATTRS = [
+  'Apariencia','Firmeza al tacto','Crujiente','Olor',
+  'Textura de pulpa','Jugosidad','Acidez','Dulzura','Sabor general'
+];
+const COLS = [
+  {label:'Pésimo',   val:1},
+  {label:'Malo',     val:2},
+  {label:'Bueno',    val:3},
+  {label:'Perfecto', val:4},
+  {label:'Sobrado',  val:5},
+  {label:'Excesivo', val:6}
+];
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzsWW83wlnWMUN_4p8buRnk6GQzWHJMECMZI7RElaCXaKVlkH7bAS3bVnDUZ5PYpjY/exec';
+
+let sampleCount = 0;
+const activeIds = [];
+
+function buildSample(idx) {
+  const thCells = COLS.map(c =>
+    `<th>${c.label}<span class="col-val">${c.val} pt</span></th>`
+  ).join('');
+
+  const headerRow = `<thead><tr>
+    <th>Atributo</th>${thCells}
+  </tr></thead>`;
+
+  const bodyRows = ATTRS.map(attr => {
+    const key = attr.replace(/\s+/g,'_');
+    const cells = COLS.map(c => `<td class="radio-cell">
+        <input type="radio" name="attr_${idx}_${key}" id="r_${idx}_${key}_${c.val}" value="${c.val}">
+        <label for="r_${idx}_${key}_${c.val}"></label>
+      </td>`).join('');
+    return `<tr id="row_${idx}_${key}"><td>${attr}</td>${cells}</tr>`;
+  }).join('');
+
+  return `
+  <div class="sample-card" id="sample_${idx}">
+    <div class="sample-header">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="sample-label">Muestra</span>
+        <input type="number" id="num_${idx}" min="1" placeholder="N°"
+          style="width:64px;padding:6px 8px;font-size:14px;font-family:'DM Mono',monospace;
+                 background:rgba(255,255,255,0.7);border:1px solid var(--border);
+                 border-radius:6px;color:var(--green);font-weight:500;text-align:center;min-height:36px;">
+      </div>
+      ${idx > 1 ? `<button class="remove-btn" type="button" onclick="removeSample(${idx})">Eliminar</button>` : ''}
+    </div>
+    <div class="sample-body">
+      <div class="scroll-hint">← Desliza para ver toda la tabla →</div>
+      <div class="table-scroll">
+        <table class="eval-table">
+          ${headerRow}
+          <tbody>${bodyRows}</tbody>
+        </table>
+      </div>
+      <span class="error-msg" id="err_table_${idx}">Selecciona una opción en cada fila antes de continuar.</span>
+    </div>
+    <div class="buy-section">
+      <div class="buy-question">¿Lo comprarías? <span class="req">*</span></div>
+      <div class="buy-options">
+        <button type="button" class="buy-btn" id="buy_si_${idx}" onclick="selectBuy(${idx},'Sí')">Sí</button>
+        <button type="button" class="buy-btn" id="buy_no_${idx}" onclick="selectBuy(${idx},'No')">No</button>
+      </div>
+      <div class="buy-error" id="err_buy_${idx}">Campo requerido</div>
+    </div>
+  </div>`;
+}
+
+function addSample() {
+  sampleCount++;
+  const idx = sampleCount;
+  activeIds.push(idx);
+  const container = document.getElementById('samples-container');
+  const div = document.createElement('div');
+  div.innerHTML = buildSample(idx);
+  container.appendChild(div.firstElementChild);
+  document.getElementById('more-section').style.display = 'block';
+}
+
+function removeSample(idx) {
+  const el = document.getElementById(`sample_${idx}`);
+  if (el) el.remove();
+  const i = activeIds.indexOf(idx);
+  if (i > -1) activeIds.splice(i, 1);
+  if (activeIds.length === 0) document.getElementById('more-section').style.display = 'none';
+}
+
+const buyAnswers = {};
+
+function selectBuy(idx, val) {
+  buyAnswers[idx] = val;
+  ['Sí','No'].forEach(v => {
+    const btn = document.getElementById(`buy_${v === 'Sí' ? 'si' : 'no'}_${idx}`);
+    if (btn) btn.classList.toggle('selected', v === val);
+  });
+  const err = document.getElementById(`err_buy_${idx}`);
+  if (err) err.classList.remove('show');
+}
+
+function validateSampleTable(idx) {
+  let allOk = true;
+  ATTRS.forEach(attr => {
+    const key = attr.replace(/\s+/g,'_');
+    const row = document.getElementById(`row_${idx}_${key}`);
+    const checked = document.querySelector(`input[name="attr_${idx}_${key}"]:checked`);
+    if (!checked) { row.classList.add('row-error'); allOk = false; }
+    else row.classList.remove('row-error');
+  });
+  const errMsg = document.getElementById(`err_table_${idx}`);
+  if (errMsg) errMsg.classList.toggle('show', !allOk);
+
+  const errBuy = document.getElementById(`err_buy_${idx}`);
+  if (!buyAnswers[idx]) {
+    if (errBuy) errBuy.classList.add('show');
+    allOk = false;
+  } else {
+    if (errBuy) errBuy.classList.remove('show');
+  }
+
+  return allOk;
+}
+
+function guardar() {
+  let valid = true;
+  const checks = [
+    {id:'unidad', err:'err-unidad'},
+    {id:'fecha',  err:'err-fecha'},
+    {id:'nombre', err:'err-nombre'},
+    {id:'puesto', err:'err-puesto'},
+  ];
+  checks.forEach(c => {
+    const el = document.getElementById(c.id);
+    const msg = document.getElementById(c.err);
+    if (!el.value.trim()) { el.classList.add('error'); msg.classList.add('show'); valid = false; }
+    else { el.classList.remove('error'); msg.classList.remove('show'); }
+  });
+
+  if (activeIds.length === 0) {
+    document.getElementById('error-banner').style.display = 'block';
+    document.getElementById('error-banner').innerHTML = '⚠️ <strong>Agrega al menos una muestra antes de guardar.</strong>';
+    document.getElementById('error-banner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  activeIds.forEach(idx => { if (!validateSampleTable(idx)) valid = false; });
+
+  if (!valid) {
+    const firstErr = document.querySelector('.row-error, .error');
+    if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  const btn = document.querySelector('.save-btn');
+  btn.textContent = 'Enviando…'; btn.disabled = true;
+  document.getElementById('error-banner').style.display = 'none';
+  document.getElementById('error-banner').innerHTML = '⚠️ <strong>No se pudieron guardar las respuestas.</strong><br>Verifica tu conexión e intenta de nuevo. No cierres esta pantalla.';
+
+  const muestras = activeIds.map(idx => {
+    const atributos = {};
+    ATTRS.forEach(attr => {
+      const key = attr.replace(/\s+/g,'_');
+      const checked = document.querySelector(`input[name="attr_${idx}_${key}"]:checked`);
+      atributos[attr] = checked ? parseInt(checked.value) : null;
+    });
+    return { numero: document.getElementById(`num_${idx}`).value || idx, atributos, lo_comprarias: buyAnswers[idx] || '' };
+  });
+
+  const payload = {
+    fecha:     document.getElementById('fecha').value,
+    unidad:    document.getElementById('unidad').value,
+    evaluador: document.getElementById('nombre').value,
+    puesto:    document.getElementById('puesto').value,
+    muestras
+  };
+
+  enviarConReintentos(payload, btn, 1);
+}
+
+const MAX_INTENTOS = 3;
+const PAUSA_MS = 3000;
+
+function esperar(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function enviarConReintentos(payload, btn, intento) {
+  btn.textContent = intento === 1 ? 'Enviando…' : 'Reintentando (' + intento + '/' + MAX_INTENTOS + ')…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+
+    if (result.status === 'ok') {
+      // Confirmación real del servidor — mostrar pantalla de éxito
+      document.getElementById('confirmacion').style.display = 'flex';
+    } else {
+      throw new Error('El servidor respondió con error');
+    }
+
+  } catch (err) {
+    if (intento < MAX_INTENTOS) {
+      btn.textContent = 'Error — reintentando en ' + (PAUSA_MS / 1000) + 's… (' + intento + '/' + MAX_INTENTOS + ')';
+      await esperar(PAUSA_MS);
+      enviarConReintentos(payload, btn, intento + 1);
+    } else {
+      btn.textContent = 'Guardar respuestas';
+      btn.disabled = false;
+      document.getElementById('error-banner').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+}
+
+addSample();
+</script>
+</body>
+</html>
